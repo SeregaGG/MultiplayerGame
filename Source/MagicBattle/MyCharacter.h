@@ -47,9 +47,12 @@ protected:
 
 	UPROPERTY(Replicated, VisibleAnywhere)
 		class UWidgetComponent* HealthWidgetComp;
-
+	
+	UPROPERTY()
 	TArray<class ACharacter*> TargetObjects;
 	int TargetObjectsLengths = 0;
+	
+	UPROPERTY()
 	class ACharacter* NearestTargetObject = nullptr;
 
 	bool bTarget = false;

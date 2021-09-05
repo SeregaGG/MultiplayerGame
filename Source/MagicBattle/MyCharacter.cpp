@@ -128,7 +128,7 @@ void AMyCharacter::UpdateUW()
 	{
 		MyHealthWidget->MaxHealth->SetText(FText::FromString(FString::FromInt(this->MaxHealth)));
 		MyHealthWidget->CurrentHealth->SetText(FText::FromString(FString::FromInt(this->CurrentHealth)));
-		MyHealthWidget->HealthPoint->SetPercent((this->CurrentHealth)/100);
+		MyHealthWidget->HealthPoint->SetPercent((this->CurrentHealth)/MaxHealth);
 	}
 }
 

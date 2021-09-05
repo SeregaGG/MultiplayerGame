@@ -30,6 +30,8 @@ protected:
 	
 	void ControllerYawInput(float Value);
 	void ControllerPitchInput(float Value);
+
+	bool SwapControllersWithHim(AMyCharacter* OtherCharacter);
 		
 public:	
 	/** Camera boom positioning the camera behind the character */
@@ -44,7 +46,8 @@ public:
 	void CallStealControl();
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-	AMyCharacter* HitCharacter;
+	UPROPERTY()
+	AMyCharacter* HitCharacter = nullptr;
 	
 	UFUNCTION(Server, Reliable)
 	void StealControl();

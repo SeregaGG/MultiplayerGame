@@ -127,15 +127,9 @@ void AMyGhost::CallStealControl_Implementation()
 
 void AMyGhost::GetControlBack_Implementation()
 {
-	AController* SaveGhostController = GetController();
-	AController* SaveCharacterController = HitCharacter->GetController();
-			
-	if(SaveGhostController&&SaveCharacterController)
+	if(HitCharacter)
 	{
-		SaveGhostController->UnPossess();
-		SaveCharacterController->UnPossess();
-		SaveGhostController->Possess(HitCharacter);
-		SaveCharacterController->Possess(this);
+		this->SwapControllersWithHim(HitCharacter);
 	}
 }
 
@@ -155,24 +149,42 @@ void AMyGhost::StealControl_Implementation()
 		if(Cast<AMyCharacter>(OutHit.GetActor()))
 		{
 			HitCharacter = Cast<AMyCharacter>(OutHit.GetActor());
-			AController* SaveGhostController = GetController();
-			AController* SaveCharacterController = HitCharacter->GetController();
+			bool SwapCheck = this->SwapControllersWithHim(HitCharacter);
 			
-			if(SaveGhostController&&SaveCharacterController)
+			if(SwapCheck)
 			{
-				SaveGhostController->UnPossess();
-				SaveCharacterController->UnPossess();
-				SaveGhostController->Possess(HitCharacter);
-				SaveCharacterController->Possess(this);
-				
 				FTimerHandle Handle;
 				GetWorld()->GetTimerManager().SetTimer(Handle, this, &AMyGhost::GetControlBack, ControlDuration, false);
 			}
 		}
 	}
 }
-// Replication
 
+bool AMyGhost::SwapControllersWithHim(AMyCharacter* OtherCharacter)
+{
+	AController* MyController = GetController();
+	AController* HisController = OtherCharacter->GetController();
+			
+	if(MyController&&HisController)
+	{
+		const FRotator GhostRotation(MyController->GetControlRotation());
+		const FRotator CharacterRotation(HisController->GetControlRotation());
+		
+		MyController->UnPossess();
+		HisController->UnPossess();
+		
+		MyController->Possess(OtherCharacter);
+		MyController->SetControlRotation(CharacterRotation);
+		
+		HisController->Possess(this);
+		HisController->SetControlRotation(GhostRotation);
+		return true;
+	}
+	return false;
+}
+
+
+// Replication
 void AMyGhost::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
