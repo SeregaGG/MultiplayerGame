@@ -35,6 +35,8 @@ protected:
 
 	UFUNCTION(Server, Reliable)
 	void Fire();
+
+	//UFUNCTION(Server,Reliable)
 	void TakeFireDamage(float dmg);
 	
 	void UpdateUW();
@@ -44,9 +46,13 @@ protected:
 	virtual void StopJumping() override;
 	void ControllerYawInput(float Value);
 	void ControllerPitchInput(float Value);
-
+	
+	
 	UPROPERTY(Replicated, VisibleAnywhere)
 		class UWidgetComponent* HealthWidgetComp;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=Animations)
+		class UAnimationAsset* M_Dead;
 	
 	UPROPERTY()
 	TArray<class ACharacter*> TargetObjects;
@@ -56,6 +62,9 @@ protected:
 	class ACharacter* NearestTargetObject = nullptr;
 
 	bool bTarget = false;
+	
+	UPROPERTY(ReplicatedUsing=OnRep_bDead,BlueprintReadOnly)
+	bool bDead;
 
 	float MaxHealth;
 
@@ -67,10 +76,12 @@ protected:
 	UFUNCTION()
 	void OnRep_CurrentHealth();
 
+	UFUNCTION()
+	void OnRep_bDead();
+	
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 public:	
 	// Called every frame
-	
 	virtual void Tick(float DeltaTime) override;
 	
 	// Called to bind functionality to input

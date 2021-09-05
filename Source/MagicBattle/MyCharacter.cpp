@@ -86,6 +86,7 @@ void AMyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 void AMyCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+	this->bDead=false;
 	this->FireDmg = 30;
 	this->MaxHealth = 100;
 	this->CurrentHealth = this->MaxHealth;
@@ -118,8 +119,34 @@ void AMyCharacter::Fire_Implementation()
 
 void AMyCharacter::TakeFireDamage(float dmg)
 {
-	this->CurrentHealth -= dmg;
+	if(!bDead && this->CurrentHealth>0)
+	{
+		this->CurrentHealth -= dmg;
+		if(this->CurrentHealth <= 0)
+		{
+			this->CurrentHealth=0;
+			bDead=true;
+			GetCharacterMovement()->DisableMovement();
+			bUseControllerRotationYaw = false;
+			if(M_Dead)
+			{
+				GetMesh()->PlayAnimation(M_Dead,false);
+			}
+		}
+	}
 }
+
+void AMyCharacter::OnRep_bDead()
+{
+	this->bDead=true;
+	GetCharacterMovement()->DisableMovement();
+	bUseControllerRotationYaw = false;
+	if(M_Dead)
+	{
+		GetMesh()->PlayAnimation(M_Dead,false);
+	}
+}
+
 
 void AMyCharacter::UpdateUW()
 {
@@ -136,7 +163,6 @@ void AMyCharacter::UpdateUW()
 
 void AMyCharacter::OnRep_CurrentHealth()
 {
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::Printf(TEXT("OnRep")));
 	this->UpdateUW();
 }
 
@@ -284,4 +310,5 @@ void AMyCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(AMyCharacter, CurrentHealth);
+	DOREPLIFETIME(AMyCharacter, bDead);
 }
