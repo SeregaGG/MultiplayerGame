@@ -14,10 +14,11 @@
 #include <GameFramework/SpringArmComponent.h>
 
 #include <Kismet/GameplayStatics.h>
-
+#include "GameFramework/Character.h"
 #include "DrawDebugHelpers.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
+#include "Engine/StaticMeshActor.h"
 #include "Net/UnrealNetwork.h"
 // Sets default values
 AMyCharacter::AMyCharacter()
@@ -35,6 +36,11 @@ AMyCharacter::AMyCharacter()
 	bUseControllerRotationRoll = false;
 
 	
+	//?????????? 
+	this->bDead=false;
+	this->FireDmg = 30;
+	this->MaxHealth = 100;
+	this->CurrentHealth = this->MaxHealth;
 
 	// Configure character movement
 	GetCharacterMovement()->bOrientRotationToMovement = false; // Character moves in the direction of input...	
@@ -86,12 +92,9 @@ void AMyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 void AMyCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	this->bDead=false;
-	this->FireDmg = 30;
-	this->MaxHealth = 100;
-	this->CurrentHealth = this->MaxHealth;
 	this->UpdateUW();
 }
+
 
 void AMyCharacter::Fire_Implementation()
 {
@@ -144,6 +147,7 @@ void AMyCharacter::OnRep_bDead()
 	if(M_Dead)
 	{
 		GetMesh()->PlayAnimation(M_Dead,false);
+		UpdateUW();
 	}
 }
 

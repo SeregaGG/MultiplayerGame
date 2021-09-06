@@ -48,7 +48,7 @@ protected:
 	void ControllerPitchInput(float Value);
 	
 	
-	UPROPERTY(Replicated, VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere)
 		class UWidgetComponent* HealthWidgetComp;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=Animations)
@@ -64,15 +64,15 @@ protected:
 	bool bTarget = false;
 	
 	UPROPERTY(ReplicatedUsing=OnRep_bDead,BlueprintReadOnly)
-	bool bDead;
-
+	bool bDead = false;
+	
 	float MaxHealth;
 
 	float FireDmg;
 	
 	UPROPERTY(ReplicatedUsing=OnRep_CurrentHealth)
 	float CurrentHealth;
-
+	
 	UFUNCTION()
 	void OnRep_CurrentHealth();
 
