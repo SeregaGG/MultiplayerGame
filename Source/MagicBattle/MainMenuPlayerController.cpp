@@ -15,18 +15,19 @@
 #include <Components/WidgetComponent.h>
 #include "Blueprint/UserWidget.h"
 
-AMainMenuPlayerController::AMainMenuPlayerController()
+AMainMenuPlayerController::AMainMenuPlayerController(bool _bReplicates = true, bool _bCanEverTick = true)
 {
-	bReplicates = true;
-	PrimaryActorTick.bCanEverTick = true;
+	bReplicates = _bReplicates;
+	PrimaryActorTick.bCanEverTick = _bCanEverTick;
 }
 
-void AMainMenuPlayerController::BeginPlay()
+void AMainMenuPlayerController::BeginPlay(bool _bShowMouseCursor = true)
 {
+	// seems like to many responsobilities for one function
 	Super::BeginPlay();
 	UWidgetBlueprintLibrary::SetInputMode_UIOnlyEx(this);
-	//UWidgetBlueprintLibrary::SetInputMode_GameOnly(this);
-	bShowMouseCursor = true;
+	// UWidgetBlueprintLibrary::SetInputMode_GameOnly(this);
+	bShowMouseCursor = _bShowMouseCursor;  // let's move this to default argument
 	UserWidget = CreateWidget<UMyUserWidget>(GetWorld(), UserWidgetClass);
 	UserWidget->AddToViewport();
 }
@@ -34,5 +35,4 @@ void AMainMenuPlayerController::BeginPlay()
 void AMainMenuPlayerController::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }

@@ -10,8 +10,10 @@
 
 AMagicBattleGameModeBase::AMagicBattleGameModeBase()
 {
+	// mb pass DefaultPawnClass and PlayerControllerClass as parameters?
+	// now ther are hardcoded and can't be changed + you make those files coupled
+	
 	// set default pawn class to our Blueprinted character
-
 	DefaultPawnClass = AMyCharacter::StaticClass();
 	PlayerControllerClass = AMyPlayerController::StaticClass();
 }
