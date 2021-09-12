@@ -17,5 +17,4 @@ void AMainMenuGameMode::BeginPlay()
 {
 	Super::BeginPlay();
 
-	//DefaultPawnClass = AMyPawn::StaticClass();
 }

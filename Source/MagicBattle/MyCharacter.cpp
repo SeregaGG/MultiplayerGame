@@ -29,14 +29,13 @@ AMyCharacter::AMyCharacter()
 	
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
-
 	// Don't rotate when the controller rotates. Let that just affect the camera.
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = true;
 	bUseControllerRotationRoll = false;
 
 	
-	//?????????? 
+	
 	this->bDead=false;
 	this->FireDmg = 30;
 	this->MaxHealth = 100;
@@ -103,45 +102,44 @@ void AMyCharacter::Fire_Implementation()
 	CollisionParams.AddIgnoredActor(this);
 	
 	FVector TraceStart = this->FollowCamera->GetComponentLocation();
-	FVector TraceEnd = TraceStart+(this->FollowCamera->GetForwardVector())*1000;
+	FVector TraceEnd = TraceStart+(this->FollowCamera->GetForwardVector())*ShotDistance;
 	
 	bool bHit = GetWorld()->LineTraceSingleByChannel(OutHit, TraceStart, TraceEnd, ECC_Visibility,CollisionParams);
+
+	if(!bHit)
+		return;
 	
-	DrawDebugLine(GetWorld(),TraceStart,TraceEnd,FColor::Red,true,-1,0,10);
-	
-	if(bHit)
+	if(bDebugTrace)
 	{
-		AMyCharacter* HitCharacter = Cast<AMyCharacter>(OutHit.GetActor());
-		if(HitCharacter)
-		{
-			HitCharacter->TakeFireDamage(this->FireDmg);
-			HitCharacter->UpdateUW();
-		}
+		DrawDebugLine(GetWorld(),TraceStart,TraceEnd,FColor::Red,true,-1,0,10);
+	}
+	
+	AMyCharacter* HitCharacter = Cast<AMyCharacter>(OutHit.GetActor());
+	if(HitCharacter)
+	{
+		HitCharacter->TakeFireDamage(this->FireDmg);
 	}
 }
 
-void AMyCharacter::TakeFireDamage(float dmg)
+void AMyCharacter::TakeFireDamage(int dmg)
 {
-	if(!bDead && this->CurrentHealth>0)
+	if(!GetDead())
 	{
-		this->CurrentHealth -= dmg;
-		if(this->CurrentHealth <= 0)
+		
+		SetCurrentHealth(GetCurrentHealth() - dmg);
+		if(GetCurrentHealth() <= 0)
 		{
-			this->CurrentHealth=0;
-			bDead=true;
-			GetCharacterMovement()->DisableMovement();
-			bUseControllerRotationYaw = false;
-			if(M_Dead)
-			{
-				GetMesh()->PlayAnimation(M_Dead,false);
-			}
+			SetCurrentHealth(0);
+			SetDead(true);
+			OnRep_bDead();
 		}
+		this->UpdateUW();
 	}
 }
 
 void AMyCharacter::OnRep_bDead()
 {
-	this->bDead=true;
+	SetDead(true);
 	GetCharacterMovement()->DisableMovement();
 	bUseControllerRotationYaw = false;
 	if(M_Dead)
@@ -160,6 +158,7 @@ void AMyCharacter::UpdateUW()
 		MyHealthWidget->MaxHealth->SetText(FText::FromString(FString::FromInt(this->MaxHealth)));
 		MyHealthWidget->CurrentHealth->SetText(FText::FromString(FString::FromInt(this->CurrentHealth)));
 		MyHealthWidget->HealthPoint->SetPercent((this->CurrentHealth)/MaxHealth);
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::Printf(TEXT("Hit Result: %d"), this->CurrentHealth));
 	}
 }
 
@@ -202,67 +201,47 @@ void AMyCharacter::MoveRight(float Value)
 
 void AMyCharacter::StopTarget()
 {
-	this->bTarget = false;
-	this->TargetObjects.Empty();
-	this->TargetObjectsLengths = 0;
+	SetTarget(false);
 }
 
 
 void AMyCharacter::Target()
 {
-	if (!this->bTarget)
-	{
-		TArray<FHitResult> OutHits;
-		//FHitResult OutHits;
-		FVector SphereStart = this->FollowCamera->GetComponentLocation() + this->FollowCamera->GetForwardVector().GetSafeNormal() * 500;
-
-		FCollisionShape MyColSphere = FCollisionShape::MakeSphere(500.0f);
-
-		//DrawDebugSphere(GetWorld(), SphereStart, MyColSphere.GetSphereRadius(), 50, FColor::Purple, true);
-
-		bool bHit = GetWorld()->SweepMultiByChannel(OutHits, SphereStart, SphereStart + FVector(0, 0, 0.01), FQuat::Identity, ECC_Visibility, MyColSphere);
-		//if (Cast<APhysicThings>(OutHits.GetActor()))
-		//{
-
-
-		//	Cast<APhysicThings>(OutHits.GetActor())->MyMesh->AddImpulse((SphereStart - Cast<APhysicThings>(OutHits.GetActor())->GetActorLocation()).GetSafeNormal() * 100000);
-		//}
-		for (auto& oneHit : OutHits)
-		{
-			if (Cast<ACharacter>(oneHit.GetActor()) && Cast<ACharacter>(oneHit.GetActor()) != this)
-			{
-				if (!this->TargetObjects.Contains(Cast<ACharacter>(oneHit.GetActor())))
-				{
-					this->NearestTargetObject = Cast<ACharacter>(oneHit.GetActor());
-					this->TargetObjects.Add(Cast<ACharacter>(oneHit.GetActor()));
-					this->TargetObjectsLengths++;
-					
-				}
-			}
-			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::Printf(TEXT("Hit Result: %s"), *oneHit.GetActor()->GetName()));
-			//Cast<APhysicThings>(oneHit.GetActor())->MyMesh->AddImpulse((SphereStart - Cast<APhysicThings>(oneHit.GetActor())->GetActorLocation()).GetSafeNormal() * 100000);
-		}
-
-	}
+	TArray<FHitResult> OutHits;
+	FVector SphereStart = this->FollowCamera->GetComponentLocation() + this->FollowCamera->GetForwardVector().GetSafeNormal() * 500;
+	FCollisionShape MyColSphere = FCollisionShape::MakeSphere(TargetSphereRadius);
+	FCollisionQueryParams CollisionParams;
+	CollisionParams.AddIgnoredActor(this);
+	//DrawDebugSphere(GetWorld(), SphereStart, MyColSphere.GetSphereRadius(), 50, FColor::Purple, true);
 	
-	if (this->TargetObjectsLengths > 0)
+	bool bHit = GetWorld()->SweepMultiByChannel(OutHits, SphereStart, SphereStart + FVector(0, 0, 0.01), FQuat::Identity, ECC_Visibility, MyColSphere, CollisionParams);
+	if(!bHit)
+		return;
+	
+	ACharacter* HitCharacter = nullptr;
+	for (auto& oneHit : OutHits)
 	{
-		for (auto& oneHit : this->TargetObjects)
+		HitCharacter = Cast<ACharacter>(oneHit.GetActor());
+		if(HitCharacter)
+			break;
+	}
+	if(!HitCharacter)
+		return;
+	
+	this->NearestTargetObject = HitCharacter;
+	for (auto& oneHit : OutHits)
+	{
+		HitCharacter = Cast<ACharacter>(oneHit.GetActor());
+		if (HitCharacter)
 		{
-			if ((GetActorLocation() - this->NearestTargetObject->GetActorLocation()).Size() > (oneHit->GetActorLocation() - GetActorLocation()).Size())
+			if ((GetActorLocation() - this->NearestTargetObject->GetActorLocation()).Size() > (HitCharacter->GetActorLocation() - GetActorLocation()).Size())
 			{
-				this->NearestTargetObject = oneHit;
+				this->NearestTargetObject = HitCharacter;
 			}
 		}
-
-		if (this->NearestTargetObject != nullptr)
-		{
-			//bUseControllerRotationPitch = false;
-			//bUseControllerRotationYaw = true;++
-			//bUseControllerRotationRoll = false;
-			this->bTarget = true;
-		}
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::Printf(TEXT("Hit Result: %s"), *oneHit.GetActor()->GetName()));
 	}
+	SetTarget(true);
 }
 
 void AMyCharacter::Jump()
@@ -277,7 +256,7 @@ void AMyCharacter::StopJumping()
 
 void AMyCharacter::ControllerYawInput(float Value)
 {
-	if (!this->bTarget)
+	if (!GetTarget())
 	{
 		AddControllerYawInput(Value);
 	}
@@ -285,7 +264,7 @@ void AMyCharacter::ControllerYawInput(float Value)
 
 void AMyCharacter::ControllerPitchInput(float Value)
 {
-	if (!this->bTarget)
+	if (!GetTarget())
 	{
 		AddControllerPitchInput(Value);
 	}
@@ -296,11 +275,11 @@ void AMyCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (this->bTarget&&GetController())
+	if (GetTarget()&&GetController())
 	{
 		const FRotator CameraBoomRotation = (this->NearestTargetObject->GetActorLocation()-GetActorLocation()).Rotation();
 		GetController()->SetControlRotation(FRotator(CameraBoomRotation.Pitch - 20, CameraBoomRotation.Yaw, 0));
-		if((this->NearestTargetObject->GetActorLocation() - this->GetActorLocation()).Size() >=1500)
+		if((this->NearestTargetObject->GetActorLocation() - this->GetActorLocation()).Size() >= TargetLen)
 		{
 			this->StopTarget();
 		}

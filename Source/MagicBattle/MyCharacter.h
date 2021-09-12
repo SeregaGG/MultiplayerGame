@@ -37,7 +37,9 @@ protected:
 	void Fire();
 
 	//UFUNCTION(Server,Reliable)
-	void TakeFireDamage(float dmg);
+	void TakeFireDamage(int dmg);
+
+	
 	
 	void UpdateUW();
 	void Target();
@@ -53,25 +55,41 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=Animations)
 		class UAnimationAsset* M_Dead;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=Animations)
+	float TargetLen = 1500;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=Animations)
+		float TargetSphereRadius = 500;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=Animations)
+		float ShotDistance = 1000;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=Animations)
+		bool bDebugTrace = true;
 	
-	UPROPERTY()
+	/*UPROPERTY()
 	TArray<class ACharacter*> TargetObjects;
-	int TargetObjectsLengths = 0;
+	int TargetObjectsLengths = 0;*/
 	
 	UPROPERTY()
 	class ACharacter* NearestTargetObject = nullptr;
 
 	bool bTarget = false;
+	void SetTarget(bool target) { this->CurrentHealth = target; }
+	bool GetTarget() { return this->bTarget; }
 	
 	UPROPERTY(ReplicatedUsing=OnRep_bDead,BlueprintReadOnly)
 	bool bDead = false;
+	void SetDead(bool dead) { this->bDead = dead; }
+	bool GetDead() { return this->bDead; }
 	
 	float MaxHealth;
 
-	float FireDmg;
+	int FireDmg;
 	
 	UPROPERTY(ReplicatedUsing=OnRep_CurrentHealth)
-	float CurrentHealth;
+	int CurrentHealth;
+
+	void SetCurrentHealth(int Health) { this->CurrentHealth = Health; }
+	int GetCurrentHealth() { return this->CurrentHealth; }
 	
 	UFUNCTION()
 	void OnRep_CurrentHealth();

@@ -20,9 +20,4 @@ protected:
 
 public:
 	AMainMenuGameMode();
-
-	//UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	//	class TSubclassOf<class UMyUserWidget> UserWidgetClass;
-	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	//	class UMyUserWidget* UserWidget;
 };
